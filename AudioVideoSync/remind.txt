@@ -1,0 +1,30 @@
+#pragma once
+注意：
+1.需要定义整体的错误码，不能总是返回-1
+2.基本上所有函数都要判断返回值，以免不知道错误发生在何处
+3.考虑能否改写ffmpeg的log函数使其打印函数名字，时间等。
+
+
+
+待实现函数：
+sdl_init
+ff_init
+v...A....
+
+有些结构体的释放需要通过专门的函数VideoParams_create
+需要写成 goto FAIL的形式去释放
+
+ff_init sdl_init写在player.c中
+
+需要考虑用锁
+
+
+进度：
+现在做player_start
+一共需要四条线程，视频播放线程(video_play_proc)，视频解码线程，音频播放，解码线程
+创建一条总线程来初始化这些。
+g_url为全局的url，需要对其进行初始化
+
+
+
+
