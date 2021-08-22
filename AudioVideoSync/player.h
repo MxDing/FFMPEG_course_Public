@@ -6,6 +6,8 @@
 #include "VideoAudio.h"
 
 SDL_Thread* S_start_handle;
+SDL_Thread* S_Video_handle;
+SDL_Thread* S_Audio_handle;
 
 
 struct _player_t

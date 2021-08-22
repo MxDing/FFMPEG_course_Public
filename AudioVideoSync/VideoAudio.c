@@ -103,6 +103,12 @@ AudioParams* AudioParams_create(void)
 	//SDL
 	//aobj->wanted_spec
 	aobj->audio_tid = NULL;
+	aobj->au_convert_ctx = swr_alloc();
+	if (aobj->au_convert_ctx == NULL)
+	{
+		av_log(NULL, AV_LOG_FATAL, "SDL create some is NULL!!\n");
+		goto FAIL;
+	}
 
 
 	av_log(NULL, AV_LOG_INFO, "AudioParam create OK!!\n");

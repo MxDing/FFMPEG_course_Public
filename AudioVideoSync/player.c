@@ -190,10 +190,60 @@ void start_proc(void* S_data)
 		av_log(NULL, AV_LOG_ERROR, "Could not open Audio codec\n");
 		return -1;
 	}
-	pobj->a_src->out_channel_layout = AV_CH_LAYOUT_STEREO;
-	pobj->a_src->out_nb_samples = pobj->a_src->pCodecCtx->frame_size;
+	pobj->a_src->out_channel_layout = AV_CH_LAYOUT_STEREO;//音频通道格式类型：双声道
+	pobj->a_src->out_nb_samples = pobj->a_src->pCodecCtx->frame_size;//音频帧中每个packet的采样数量，打开流时就已确定
+	pobj->a_src->out_sample_fmt = AV_SAMPLE_FMT_S16;//音频的量化精度,S16是有符号
+	pobj->a_src->out_sample_rate = 44100;//音频采样率
+	pobj->a_src->out_channels = av_get_channel_layout_nb_channels(pobj->a_src->out_channel_layout);//根据音频通道格式返回音频通道数
+	//Out Buffer size根据上面的音频设置信息返回一块建议大小的内存size
+	pobj->a_src->out_buffer_size = av_samples_get_buffer_size(NULL, pobj->a_src->out_channels, pobj->a_src->out_nb_samples,
+		pobj->a_src->out_sample_fmt, 1);
+	//分配内存
+	pobj->a_src->out_buffer = (uint8_t*)av_malloc(MAX_AUDIO_FRAME_SIZE * 2);
+	//SDL_AUDIO
+	pobj->a_src->wanted_spec.freq = pobj->a_src->out_sample_rate;
+	pobj->a_src->wanted_spec.format = AUDIO_S16SYS;//采样位数，量化精度
+	pobj->a_src->wanted_spec.channels = pobj->a_src->out_channels;
+	pobj->a_src->wanted_spec.callback = fill_audio;//这个是回调函数，后面会被反复调用的
+	pobj->a_src->wanted_spec.userdata = pobj->a_src;//传入回调函数的参数
+	//打开音频设备,将音频硬件信息给到第二个参数，若第二个参数为空，则将通过会回调函数生成指定的音频信息
+	if (SDL_OpenAudio(&(pobj->a_src->wanted_spec), NULL) < 0)
+	{
+		av_log(NULL, AV_LOG_ERROR, "Could not open Audio Device\n");
+		return -1;
+	}
+	pobj->a_src->in_channel_layout = av_get_default_channel_layout(pobj->a_src->pCodecCtx->channels);
+	//Swr
+	pobj->a_src->au_convert_ctx = swr_alloc_set_opts(pobj->a_src->au_convert_ctx,
+		pobj->a_src->out_channel_layout, pobj->a_src->out_sample_fmt, pobj->a_src->out_sample_rate,
+		pobj->a_src->in_channel_layout, pobj->a_src->pCodecCtx->sample_fmt,
+		pobj->a_src->pCodecCtx->sample_rate, 0, NULL);
+	//真正初始化au_convert_ctx句柄
+	swr_init(pobj->a_src->au_convert_ctx);
+
+	//停止播放:参数为0就播放，否则停止
+	SDL_PauseAudio(1);
+
+	//初始化成功，需要打开音频和视频的解码线程
+	av_log(NULL, AV_LOG_INFO, "Audio/Video start_init ok\n");
+
+	S_Video_handle = SDL_CreateThread(Video_decode_proc, "Video_decode_proc", (void*)pobj);
+	if (S_Video_handle == NULL)
+	{
+		av_log(NULL, AV_LOG_ERROR, "S_Video_handle fail\n");
+		return -1;
+	}
+	S_Audio_handle = SDL_CreateThread(Audio_decode_proc, "Audio_decode_proc", (void*)pobj);
+	if (S_Video_handle == NULL)
+	{
+		av_log(NULL, AV_LOG_ERROR, "S_Audio_handle fail\n");
+		return -1;
+	}
 
 
+
+	return 0;
+	
 
 }
 

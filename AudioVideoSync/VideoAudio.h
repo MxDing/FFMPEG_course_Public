@@ -55,11 +55,13 @@ struct _AudioParams_t
 	int out_sample_rate;
 	int out_channels;
 	int out_buffer_size;
+	int64_t in_channel_layout;
 
 	//SDL
 	SDL_AudioSpec wanted_spec;
 	SDL_Thread* audio_tid;
 	SDL_Event event;
+	SwrContext* au_convert_ctx;
 
 	char filepath[4096];//资源路径
 	int cur_channel;
