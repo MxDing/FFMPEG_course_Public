@@ -2,6 +2,11 @@
 #include "ff_sdl.h"
 #include "player.h"
 
+
+SDL_Thread* S_start_handle;
+SDL_Thread* S_Video_handle;
+SDL_Thread* S_Audio_handle;
+
 char g_url[4096];
 
 //先调用player_crreate,再调用player_init初始化
@@ -240,11 +245,8 @@ void start_proc(void* S_data)
 		return -1;
 	}
 
-
-
 	return 0;
 	
-
 }
 
 int setDataSource(char* url)
