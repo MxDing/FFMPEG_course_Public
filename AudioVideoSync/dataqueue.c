@@ -39,21 +39,43 @@ dataqueue_t *dataqueue_create(char* buf, int bufsize)
 	 return data_queue;
 }
 
- int dataqueue_get_buf_to_read(dataqueue_t* data_queue, char *read_buf, int *size)
+//获取可读的内存
+ int dataqueue_get_buf_to_read(dataqueue_t* data_queue, char **read_buf, int *size)
  {
-	 if (data_queue == NULL || *size == 0)
+	 if (data_queue == NULL || *size == 0 || data_queue->re_size <= 0)
 	 {
-		 av_log(NULL, AV_LOG_ERROR, "dataqueue_get_buf_to_read is NULL or size is 0\n");
+		 av_log(NULL, AV_LOG_ERROR, "dataqueue_get_buf_to_read is NULL or size or re_size is 0\n");
 		 return -1;
 	 }
-	 if (data_queue->re_size >= *size)
+
+	 *read_buf = data_queue->buf_read;
+
+	 if (data_queue->re_size < *size)
 	 {
-		
+		 *size = data_queue->re_size;
+		 av_log(NULL, AV_LOG_INFO, "No have enough data to read...adjusting..\n");
 	 }
+	 return 1;
 	
  }
 
 
+ int dataqueue_get_buf_to_readcomplete(dataqueue_t* data_queue, int* size)
+ {
+	 if (data_queue == NULL || *size == 0 || data_queue->re_size <= 0)
+	 {
+		 av_log(NULL, AV_LOG_ERROR, "dataqueue_get_buf_to_read is NULL or size or re_size is 0\n");
+		 return -1;
+	 }
+
+	 data_queue->buf_read = data_queue->buf_read + *size;
+
+	 if (data_queue->re_size >= *size)
+		 data_queue->re_size = data_queue->re_size - *size;
+	 else
+		 data_queue->re_size = 0;
+
+ }
 
 
 
