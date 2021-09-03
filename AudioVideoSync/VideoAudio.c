@@ -135,3 +135,76 @@ FAIL:
 
 	return NULL;
 }
+
+
+int Demulti_proc(void* handle)
+{
+	int ret = 0;
+	dataqueue_t* v_data = NULL;
+	dataqueue_t* a_data = NULL;
+	char *w_vbuf=NULL;
+	char *w_abuf=NULL;
+	int w_vsize=PRE_DATA_SZIE;//每一次获取的大小
+	int w_asize=PRE_DATA_SZIE;
+	char* v_buf = malloc(MAX_VIDEO_BUF_SIZE);
+	char* a_buf = malloc(MAX_AUDIO_BUF_SIZE);
+	if (v_buf == NULL || a_buf == NULL)
+	{
+		av_log(NULL, AV_LOG_ERROR, "a_buf is NULL or v_buf is NULL\n");
+		return -1;
+	}
+	player_t* pobj = (player_t*)handle;
+	if (pobj == NULL)
+	{
+		av_log(NULL, AV_LOG_ERROR, "Demulti pobj is NULL\n");
+		return -1;
+	}
+	v_data = dataqueue_create(v_buf, MAX_VIDEO_BUF_SIZE);
+	a_data = dataqueue_create(a_buf, MAX_AUDIO_BUF_SIZE);
+
+	if(is_handle(v_data) || is_handle(a_data))
+		return -1;
+	
+
+	while (1)
+	{
+		dataqueue_get_buf_to_write(v_data,&w_vbuf,&w_vsize);
+		
+	}
+
+
+
+	return 0;
+}
+
+
+//视频数据解码线程（并压入数据队列）
+int Video_decode_proc(void* handle)
+{
+	//
+
+	return 0;
+}
+
+int Audio_decode_proc(void* handle)
+{
+
+	return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -32,6 +32,11 @@ extern "C"
 #pragma comment(lib,"SDL2.lib")
 #pragma comment(lib,"SDL2main.lib")
 
+#define av_log(a,b,...) av_log((a),(b),"[%s : %d]",__FUNCTION__, __LINE__);\
+						av_log((a),(b),__VA_ARGS__)
+//#define av_log(a,b,...) av_log((a),(b),"[%s : %d]",__FUNCTION__, __LINE__,__VA_ARGS__);
+
+
 
 #endif
 

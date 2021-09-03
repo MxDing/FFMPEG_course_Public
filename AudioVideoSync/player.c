@@ -4,8 +4,12 @@
 
 
 SDL_Thread* S_start_handle;
+
 SDL_Thread* S_Video_handle;
 SDL_Thread* S_Audio_handle;
+SDL_Thread* S_Audio_Dechandle;
+SDL_Thread* S_Video_Dechandle;
+SDL_Thread* S_Demulti_handle;//解复用
 
 char g_url[4096];
 
@@ -232,6 +236,8 @@ void start_proc(void* S_data)
 	//初始化成功，需要打开音频和视频的解码线程
 	av_log(NULL, AV_LOG_INFO, "Audio/Video start_init ok\n");
 
+	//需要加上锁，等全部都打开后再开始线程
+
 	S_Video_handle = SDL_CreateThread(Video_decode_proc, "Video_decode_proc", (void*)pobj);
 	if (S_Video_handle == NULL)
 	{
@@ -244,6 +250,15 @@ void start_proc(void* S_data)
 		av_log(NULL, AV_LOG_ERROR, "S_Audio_handle fail\n");
 		return -1;
 	}
+
+	S_Demulti_handle = SDL_CreateThread(Demulti_proc, "Demulti_proc", (void*)pobj);
+	if (S_Demulti_handle== NULL)
+	{
+		av_log(NULL, AV_LOG_ERROR, "fS_Audio_handle fail\n");
+		return -1;
+	}
+
+
 
 	return 0;
 	

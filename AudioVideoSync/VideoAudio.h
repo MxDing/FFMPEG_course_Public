@@ -4,6 +4,9 @@
 #include "ff_sdl.h"
 #include "base.h"
 
+#define MAX_VIDEO_BUF_SIZE 1024*1000*1000
+#define MAX_AUDIO_BUF_SIZE 1024*1000*1000
+
 
 //STRUCTURE
 struct _VideoParams_t
@@ -75,6 +78,9 @@ typedef struct _AudioParams_t AudioParams;
 VideoParams* VideoParams_create(void);
 AudioParams* AudioParams_create(void);
 
+int Video_decode_proc(void* handle);
+int Audio_decode_proc(void* handle);
+int Demulti_proc(void* handle);
 #endif // !_VIDEOAUDIO_H
 
 

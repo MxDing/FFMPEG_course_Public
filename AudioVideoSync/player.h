@@ -4,6 +4,7 @@
 
 #include "ff_sdl.h"
 #include "VideoAudio.h"
+#include "dataqueue.h"
 
 #define MAX_AUDIO_FRAME_SIZE 192000
 
@@ -16,6 +17,8 @@ struct _player_t
 {
 	VideoParams* v_src;
 	AudioParams* a_src;
+	dataqueue_t* video_queue;
+	dataqueue_t* audio_queue;
 
 };
 
