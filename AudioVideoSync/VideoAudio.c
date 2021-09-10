@@ -140,12 +140,13 @@ FAIL:
 int Demulti_proc(void* handle)
 {
 	int ret = 0;
+	int counts=0;
 	dataqueue_t* v_data = NULL;
 	dataqueue_t* a_data = NULL;
 	char *w_vbuf=NULL;
 	char *w_abuf=NULL;
-	int w_vsize=PRE_DATA_SZIE;//每一次获取的大小
-	int w_asize=PRE_DATA_SZIE;
+	int w_vsize=0;//每一次获取的大小,可以在packet的数据中获取到
+	int w_asize=0;
 	char* v_buf = malloc(MAX_VIDEO_BUF_SIZE);
 	char* a_buf = malloc(MAX_AUDIO_BUF_SIZE);
 	if (v_buf == NULL || a_buf == NULL)
@@ -165,10 +166,52 @@ int Demulti_proc(void* handle)
 	if(is_handle(v_data) || is_handle(a_data))
 		return -1;
 	
+	char *url=pobj->s_url;
+	//这个需要改，因为不管是音频还是视频，都用一个AVFormatContext句柄就行
+	AVFormatContext *pFormatCtx=pobj->v_src->pFormatCtx;
+
+	AVPacket *packet = (AVPacket*)av_malloc(sizeof(AVPacket));
+	if(is_handle(packet))
+		return -1;
+
+	int audio_index = pobj->a_src->audioindex;
+	int video_index = pobj->v_src->videoindex;
+	int a_v_s=-1;//0为音频，1为视频
 
 	while (1)
 	{
-		dataqueue_get_buf_to_write(v_data,&w_vbuf,&w_vsize);
+		//先解析，然后再申请对应的内存
+		//dataqueue_get_buf_to_write(v_data,&w_vbuf,&w_vsize);
+		if(av_read_frame(pFormatCtx,packet) >= 0)
+		{
+			switch(packet->stream_index)
+			{
+				case audio_index:a_v_s = 0;break;
+				case video_index:a_v_s = 1;break;
+				default :a_v_s = -1;break;
+			}
+		}
+		if(a_v_s == 0)
+		{
+			w_asize=packet->size;
+			while((ret = dataqueue_get_buf_to_write(a_data,&a_vbuf,&w_asize)) != DATA_OK)
+			{
+				if(ret == DATA_NOENOUGH)
+				{
+					//延时一会
+					delay_ms(10);
+					counts++;
+					if(counts > 1000)
+					{
+						av_log(NULL,AV_LOG_DEBUG,"dataqueue_get_buf_to_write so much fail !!\n");
+						counts=0;
+					}
+					continue;
+				}
+			}
+			
+
+		}
 		
 	}
 
