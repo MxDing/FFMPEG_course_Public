@@ -5,6 +5,7 @@
 #include "base.h"
 
 typedef struct dataqueue dataqueue_t;
+typedef struct mess_node mess_t;
 
 //取最小值
 #define _min(a,b) ((a)>(b))? (b):(a)

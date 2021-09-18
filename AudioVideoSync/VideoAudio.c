@@ -149,6 +149,7 @@ int Demulti_proc(void* handle)
 	int w_asize=0;
 	char* v_buf = malloc(MAX_VIDEO_BUF_SIZE);
 	char* a_buf = malloc(MAX_AUDIO_BUF_SIZE);
+	int packet_size=sizeof(AVPacket);
 	if (v_buf == NULL || a_buf == NULL)
 	{
 		av_log(NULL, AV_LOG_ERROR, "a_buf is NULL or v_buf is NULL\n");
@@ -190,31 +191,70 @@ int Demulti_proc(void* handle)
 				case video_index:a_v_s = 1;break;
 				default :a_v_s = -1;break;
 			}
+		}else
+		{
+			//可能是到文件尾部了
+			av_log(NULL,AV_LOG_DEBUG,"av_read_frame is return < 0 !!\n");
+			break;
 		}
 		if(a_v_s == 0)
 		{
-			w_asize=packet->size;
-			while((ret = dataqueue_get_buf_to_write(a_data,&a_vbuf,&w_asize)) != DATA_OK)
+			int tmp_size=packet_size;
+			while((ret = dataqueue_get_buf_to_write(a_data,&w_abuf,&tmp_size)) != DATA_OK)
 			{
 				if(ret == DATA_NOENOUGH)
 				{
 					//延时一会
 					delay_ms(10);
 					counts++;
-					if(counts > 1000)
+					//需要考虑如果返回的大小不够packet->size的结果
+					if(counts > 100)
 					{
 						av_log(NULL,AV_LOG_DEBUG,"dataqueue_get_buf_to_write so much fail !!\n");
 						counts=0;
+						break;
 					}
+					tmp_size=packet_size;
 					continue;
 				}
 			}
-			
-
+			AVPacket *packet_tmp = av_packet_clone(packet);
+			memcpy(w_abuf,packet_tmp,tmp_size);
+			av_packet_unref(packet);
+			dataqueue_buf_writecomplete(a_data,tmp_size);
+		}else if(a_v_s == 1)
+		{
+			int tmp_size=packet_size;
+			while((ret = dataqueue_get_buf_to_write(v_data,&w_vbuf,&tmp_size)) != DATA_OK)
+			{
+				if(ret == DATA_NOENOUGH)
+				{
+					//延时一会
+					delay_ms(10);
+					counts++;
+					//需要考虑如果返回的大小不够packet->size的结果
+					if(counts > 100)
+					{
+						av_log(NULL,AV_LOG_DEBUG,"dataqueue_get_buf_to_write so much fail !!\n");
+						counts=0;
+						break;
+					}
+					tmp_size=packet_size;
+					continue;
+				}
+			}
+			AVPacket *packet_tmp = av_packet_clone(packet);
+			memcpy(w_abuf,packet_tmp,tmp_size);
+			av_packet_unref(packet);
+			dataqueue_buf_writecomplete(v_data,tmp_size);
+		}else
+		{
+			av_log(NULL,AV_LOG_ERROR,"a_v_s is -1 !!\n");
 		}
-		
+		delay_ms(10);
 	}
 
+	av_log(NULL,AV_LOG_DEBUG,"Demulti_proc is over !!\n");
 
 
 	return 0;
